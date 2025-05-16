@@ -1,0 +1,341 @@
+module traffic_light_controller (
+    input wire clk, reset,
+    input wire sound_sensor,
+    input wire sensor_a1, sensor_a2, sensor_a3,
+    input wire sensor_b1, sensor_b2, sensor_b3,
+    input wire sensor_c1, sensor_c2, sensor_c3,
+    input wire sensor_d1, sensor_d2, sensor_d3,
+    input wire rc1, rc2, rc3, rc4,
+    input wire sensor_ss1, sensor_ss2, sensor_ss3, sensor_ss4,  // Emergency vehicle sensors
+    output reg light_t1_r, light_t1_g, light_t1_y,
+    output reg light_t2_r, light_t2_g, light_t2_y,
+    output reg light_t3_r, light_t3_g, light_t3_y,
+    output reg light_t4_r, light_t4_g, light_t4_y,
+    output reg cm  // camera trigger
+);
+
+// State encoding using localparams
+localparam S0  = 5'd0,  S1  = 5'd1,  S2  = 5'd2,  S3  = 5'd3,  S4  = 5'd4,
+           S5  = 5'd5,  S6  = 5'd6,  S7  = 5'd7,  S8  = 5'd8,  S9  = 5'd9,
+           S10 = 5'd10, S11 = 5'd11, S12 = 5'd12, S13 = 5'd13, S14 = 5'd14,
+           S15 = 5'd15, S16 = 5'd16, S17 = 5'd17, S18 = 5'd18, S19 = 5'd19,
+           S20 = 5'd20, S21 = 5'd21, S22 = 5'd22, S23 = 5'd23, S24 = 5'd24,
+           S25 = 5'd25, S26 = 5'd26, S27 = 5'd27, S28 = 5'd28, S29 = 5'd29,
+           S30 = 5'd30, S31 = 5'd31, S32 = 5'd32, S33 = 5'd33, S34 = 5'd34;
+
+// State variables
+reg [4:0] current_state, next_state;
+
+// Counter for timing
+reg [31:0] counter;
+localparam TIME_0S  = 32'd0, TIME_3S  = 32'd300_000_000, TIME_6S  = 32'd600_000_000, 
+           TIME_12S = 32'd1_200_000_000, TIME_15S = 32'd1_500_000_000; 
+
+// State transition and output logic
+always @(posedge clk or posedge reset) begin
+    if (reset) begin
+        current_state <= S0;
+        counter <= 0;
+    end else begin
+        if (counter == 0) begin
+            current_state <= next_state;
+            case (next_state)
+                S0:  counter <= TIME_0S;  
+                S1:  counter <= TIME_0S;  
+                S2:  counter <= TIME_0S;  
+                S3:  counter <= TIME_0S;
+                S4:  counter <= TIME_0S;
+                S5:  counter <= TIME_0S;
+                S6:  counter <= TIME_6S;   
+                S7:  counter <= TIME_12S;  
+                S8:  counter <= TIME_15S;  
+                S9:  counter <= TIME_3S;   
+                S10: counter <= TIME_6S;   
+                S11: counter <= TIME_12S;  
+                S12: counter <= TIME_15S;  
+                S13: counter <= TIME_3S;   
+                S14: counter <= TIME_6S;   
+                S15: counter <= TIME_12S;  
+                S16: counter <= TIME_15S;  
+                S17: counter <= TIME_3S;   
+                S18: counter <= TIME_6S;   
+                S19: counter <= TIME_12S;  
+                S20: counter <= TIME_15S;  
+                S21: counter <= TIME_3S;   
+                S22: counter <= TIME_0S;
+                S23: counter <= TIME_15S;   
+                S24: counter <= TIME_15S;  
+                S25: counter <= TIME_15S;  
+                S26: counter <= TIME_15S;  
+                S27: counter <= TIME_3S; 
+                S28: counter <= TIME_3S;   
+                S29: counter <= TIME_3S;   
+                S30: counter <= TIME_3S;   
+                S31: counter <= TIME_3S;   
+                S32: counter <= TIME_3S;   
+                S33: counter <= TIME_3S;   
+                S34: counter <= TIME_3S;   
+                default: counter <= TIME_0S;
+            endcase
+        end else begin
+            counter <= counter - 1;
+        end
+    end
+end
+
+// State register
+always @(posedge clk or posedge reset) begin
+    if (reset)
+        current_state <= S0;
+    else
+        current_state <= next_state;
+end
+
+// Next state logic
+always @(*) begin
+    case (current_state)
+        S0: next_state = sound_sensor ? S22 : S1;
+        S1: begin
+            if (sensor_a1 | sensor_a2 | sensor_a3) next_state = S2;
+            else if (sensor_b1 | sensor_b2 | sensor_b3) next_state = S3;
+            else if (sensor_c1 | sensor_c2 | sensor_c3) next_state = S4;
+            else if (sensor_d1 | sensor_d2 | sensor_d3) next_state = S5;
+            else next_state = S0;
+        end
+        S2: begin
+            if (sensor_a1) next_state = S6;
+            else if (sensor_a2) next_state = S7;
+            else if (sensor_a3) next_state = S8;
+            else next_state = S2;
+        end
+        S3: begin
+            if (sensor_b1) next_state = S10;
+            else if (sensor_b2) next_state = S11;
+            else if (sensor_b3) next_state = S12;
+            else next_state = S3;
+        end
+        S4: begin
+            if (sensor_c1) next_state = S14;
+            else if (sensor_c2) next_state = S15;
+            else if (sensor_c3) next_state = S16;
+            else next_state = S4;
+        end
+        S5: begin
+            if (sensor_d1) next_state = S18;
+            else if (sensor_d2) next_state = S19;
+            else if (sensor_d3) next_state = S20;
+            else next_state = S5;
+        end
+        S6, S7, S8: next_state = S9;
+        S9: next_state = S0;
+        S10, S11, S12: next_state = S13;
+        S13: next_state = S0;
+        S14, S15, S16: next_state = S17;
+        S17: next_state = S0;
+        S18, S19, S20: next_state = S21;
+        S21: next_state = S0;
+        S22: begin
+            if (!sound_sensor) next_state = S1;
+            else if (sensor_ss1) next_state = S23;
+            else if (sensor_ss2) next_state = S24;
+            else if (sensor_ss3) next_state = S25;
+            else if (sensor_ss4) next_state = S26;
+            else next_state = S22;
+        end
+        S23: next_state = S27;
+        S24: next_state = S28;
+        S25: next_state = S29;
+        S26: next_state = S30;
+        S27: next_state = S31;
+        S28: next_state = S32;
+        S29: next_state = S33;
+        S30: next_state = S34;
+        S31: begin
+            if (sensor_ss2) next_state = S24;
+            else if (sensor_ss3) next_state = S25;
+            else if (sensor_ss4) next_state = S26;
+            else next_state = S0;
+        end
+        S32: begin
+            if (sensor_ss1) next_state = S23;
+            else if (sensor_ss3) next_state = S25;
+            else if (sensor_ss4) next_state = S26;
+            else next_state = S0;
+        end
+        S33: begin
+            if (sensor_ss1) next_state = S23;
+            else if (sensor_ss2) next_state = S24;
+            else if (sensor_ss4) next_state = S26;
+            else next_state = S0;
+        end
+        S34: begin
+            if (sensor_ss1) next_state = S23;
+            else if (sensor_ss2) next_state = S24;
+            else if (sensor_ss3) next_state = S25;
+            else next_state = S0;
+        end
+        default: next_state = S0;
+    endcase
+end
+
+    // Output logic
+   
+// Output logic
+always @(*) begin
+    // Default: all lights red, camera off
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b100;
+    {light_t2_r, light_t2_y, light_t2_g} = 3'b100;
+    {light_t3_r, light_t3_y, light_t3_g} = 3'b100;
+    {light_t4_r, light_t4_y, light_t4_g} = 3'b100;
+    cm = 1'b0;
+
+    case (current_state)
+        S0, S1, S2, S3, S4, S5, S22: begin
+            // All lights red
+            {light_t1_r, light_t1_y, light_t1_g} = 3'b100;
+            {light_t2_r, light_t2_y, light_t2_g} = 3'b100;
+            {light_t3_r, light_t3_y, light_t3_g} = 3'b100;
+            {light_t4_r, light_t4_y, light_t4_g} = 3'b100;
+                cm = 1'b0;
+        end
+
+// T1 Green States
+S6, S7, S8: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b001; 
+
+    // Display traffic status based on current state
+    if (current_state == S6) 
+        $display("light traffic(a1):100");
+    else if (current_state == S7) 
+        $display("medium traffic(a2):110");
+    else if (current_state == S8) 
+        $display("high traffic(a1):111");
+
+    // Set camera signal based on road traffic detection (rc1)
+    cm = rc1;  // Camera activated based on emergency signal or traffic condition
+
+end
+S9: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b100;  // Yellow for T1
+        cm = 1'b0;
+end
+
+// T1 Green States
+S10, S11, S12: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b001; 
+
+    // Display traffic status based on current state
+    if (current_state == S10) 
+        $display("light traffic(a1):100");
+    else if (current_state == S11) 
+        $display("medium traffic(a2):110");
+    else if (current_state == S12) 
+        $display("high traffic(a1):111");
+
+    // Set camera signal based on road traffic detection (rc1)
+    cm = rc2;  // Camera activated based on emergency signal or traffic condition
+
+end
+S13: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b100;  // Yellow for T1
+        cm = 1'b0;
+end
+
+
+// T1 Green States
+S14, S15, S16: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b001; 
+
+    // Display traffic status based on current state
+    if (current_state == S14) 
+        $display("light traffic(a1):100");
+    else if (current_state == S15) 
+        $display("medium traffic(a2):110");
+    else if (current_state == S16) 
+        $display("high traffic(a1):111");
+
+    // Set camera signal based on road traffic detection (rc1)
+    cm = rc3;  // Camera activated based on emergency signal or traffic condition
+
+end
+S17: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b100;  // Yellow for T1
+    cm = 1'b0;
+
+end
+
+
+// T1 Green States
+S18, S19, S20: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b001; 
+
+    // Display traffic status based on current state
+    if (current_state == S18) 
+        $display("light traffic(a1):100");
+    else if (current_state == S19) 
+        $display("medium traffic(a2):110");
+    else if (current_state == S20) 
+        $display("high traffic(a1):111");
+
+    // Set camera signal based on road traffic detection (rc1)
+    cm = rc4;  // Camera activated based on emergency signal or traffic condition
+
+end
+S21: begin
+    {light_t1_r, light_t1_y, light_t1_g} = 3'b100;  // Yellow for T1
+    cm = 1'b0;
+
+end
+
+
+
+        // Emergency Green States
+        S23: begin
+            {light_t1_r, light_t1_y, light_t1_g} = 3'b001; // T1 green
+            cm = rc1;
+        end
+        S24: begin
+            {light_t2_r, light_t2_y, light_t2_g} = 3'b001; // T2 green
+            cm = rc2;
+        end
+        S25: begin
+            {light_t3_r, light_t3_y, light_t3_g} = 3'b001; // T3 green
+            cm = rc3;
+        end
+        S26: begin
+            {light_t4_r, light_t4_y, light_t4_g} = 3'b001; // T4 green
+            cm = rc4;
+        end
+
+        // Emergency Yellow States
+        S27: begin
+            {light_t1_r, light_t1_y, light_t1_g} = 3'b010; // T1 yellow
+            cm = 1'b0;
+        end
+        S28: begin
+            {light_t2_r, light_t2_y, light_t2_g} = 3'b010; // T2 yellow
+            cm = 1'b0;
+        end
+        S29: begin
+            {light_t3_r, light_t3_y, light_t3_g} = 3'b010; // T3 yellow
+            cm = 1'b0;
+        end
+        S30: begin
+            {light_t4_r, light_t4_y, light_t4_g} = 3'b010; // T4 yellow
+            cm = 1'b0;
+        end
+
+        // Emergency Transition States
+        S31, S32, S33, S34: begin
+            {light_t1_r, light_t1_y, light_t1_g} = 3'b100;
+            {light_t2_r, light_t2_y, light_t2_g} = 3'b100;
+            {light_t3_r, light_t3_y, light_t3_g} = 3'b100;
+            {light_t4_r, light_t4_y, light_t4_g} = 3'b100;
+            cm = 1'b0;
+        end
+    endcase
+end
+
+
+
+endmodule

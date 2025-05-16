@@ -1,0 +1,99 @@
+
+`timescale 1ns / 1ps
+
+module fir_r2l_dynamic_efficient (
+input  wire        clk,
+input  wire        rst,
+input  wire  [7:0]  x_in,        // 8-bit signed input
+input  wire [0:11]        h_mask,      // 12-bit coefficient mask (1 for 2^-i)
+output reg   [15:0] y_out        // Wider output for multiple shifted adds
+);
+
+
+// Internal logic
+reg  [15:0] acc;
+integer i;
+
+always @(posedge clk or posedge rst) begin
+    if (rst) begin
+        y_out <= 0;
+        acc   <= 0;
+    end else begin
+        acc = 0;
+
+        // Accumulate shifted versions of x_in from MSB to LSB
+        for (i = 11; i >= 0; i = i - 1) begin
+            if (h_mask[i]) begin
+                acc = acc + (x_in >>> i);  // signed arithmetic shift
+            end
+        end
+
+        y_out <= acc;
+    end
+end
+
+endmodule
+`timescale 1ns / 1ps
+
+module fir_r2l_dynamic_efficient_tb;
+
+    // Inputs
+    reg clk;
+    reg rst;
+    reg [7:0] x_in;
+    reg [11:0] h_mask;
+
+    // Output
+    wire [15:0] y_out;
+
+    // Instantiate the DUT
+    fir_r2l_dynamic_efficient uut (
+        .clk(clk),
+        .rst(rst),
+        .x_in(x_in),
+        .h_mask(h_mask),
+        .y_out(y_out)
+    );
+
+    // VCD Dump
+    initial begin
+        $dumpfile("fir_r2l_dynamic_efficient.vcd");
+        $dumpvars(0, fir_r2l_dynamic_efficient_tb);
+    end
+
+    // Clock generation
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    // Stimulus
+    initial begin
+        $display("Time\tclk\trst\tx_in\t\th_mask\t\ty_out");
+        $monitor("%0t\t%b\t%b\t%8b\t%12b\t%6d", $time, clk, rst, x_in, h_mask, y_out);
+
+        // Initial reset
+        rst = 1;
+        x_in = 0;
+        h_mask = 0;
+        #12;
+
+        rst = 0;
+
+        // Test 1
+        x_in = 8'b10101010;              // 170
+        h_mask = 12'b001010101010;
+        #40;
+
+        // Test 2
+        x_in = 8'b00001111;              // 15
+        h_mask = 12'b001010101010;
+        #40;
+
+        // Test 3
+        x_in = 8'b11110000;              // 240 (if unsigned)
+        h_mask = 12'b001010101010;
+        #40;
+
+        $finish;
+    end
+
+endmodule

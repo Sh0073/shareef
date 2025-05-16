@@ -1,0 +1,243 @@
+module baud_gen(
+    input clk,
+    input reset,
+    output reg baud_en
+);
+    parameter CLK_FREQ = 50000000;  // 50 MHz
+    parameter BAUD_RATE = 9600;     // 9600 bps
+
+    localparam integer BAUD_COUNT_MAX = CLK_FREQ / BAUD_RATE;
+    reg [31:0] counter;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            counter <= 0;
+            baud_en <= 0;
+        end else begin
+            if (counter == BAUD_COUNT_MAX/2 - 1) begin
+                baud_en <= 1;
+                counter <= 0;
+            end else begin
+                counter <= counter + 1;
+                baud_en <= 0;
+            end
+        end
+    end
+endmodule   
+
+
+
+module uart_tx(
+    input clk,
+    input reset,
+    input baud_en,
+    input [7:0] t_byte,
+    input load,
+    output reg tx,
+    output reg ready
+);
+
+    reg [9:0] shift_reg;
+    reg [3:0] bit_cnt;
+    reg sending;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            tx <= 1'b1;
+            shift_reg <= 10'b1111111111;
+            bit_cnt <= 0;
+            sending <= 0;
+            ready <= 1;
+        end else begin
+            if (load && ready) begin
+                shift_reg <= {1'b1, t_byte, 1'b0}; // {stop bit, 8 data bits, start bit}
+                sending <= 1;
+                bit_cnt <= 0;
+                ready <= 0;
+            end else if (sending && baud_en) begin
+                tx <= shift_reg[0];
+                shift_reg <= shift_reg >> 1;
+                bit_cnt <= bit_cnt + 1;
+                if (bit_cnt == 9) begin
+                    sending <= 0;
+                    ready <= 1;
+                end
+            end
+        end
+    end
+endmodule   
+
+
+
+
+module uart_rx(
+    input clk,
+    input reset,
+    input baud_en,
+    input serial_in,
+    output reg [7:0] r_byte,
+    output reg done
+);
+
+    reg [9:0] shift_reg;
+    reg [3:0] bit_cnt;
+    reg receiving;
+    reg half_bit_sample;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            shift_reg <= 10'b0;
+            bit_cnt <= 0;
+            receiving <= 0;
+            half_bit_sample <= 0;
+            r_byte <= 8'b0;
+            done <= 0;
+        end else begin
+            done <= 0;
+
+            if (!receiving) begin
+                if (!serial_in) begin  // Start bit detected
+                    receiving <= 1;
+                    half_bit_sample <= 1;
+                    bit_cnt <= 0;
+                end
+            end else if (baud_en) begin
+                if (half_bit_sample) begin
+                    // Skip half bit time
+                    half_bit_sample <= 0;
+                end else begin
+                    shift_reg <= {serial_in, shift_reg[9:1]};
+                    bit_cnt <= bit_cnt + 1;
+                    if (bit_cnt == 9) begin
+                        receiving <= 0;
+                        r_byte <= shift_reg[8:1]; // Get only data bits
+                        done <= 1;
+                    end
+                end
+            end
+        end
+    end
+endmodule   
+
+
+module uart_top(
+    input clk,
+    input reset,
+    input [7:0] data_in,
+    input load_tx,
+    output tx,
+    output [7:0] data_out,
+    output done,
+    output ready
+);
+
+    wire baud_en;
+    wire internal_rx;
+
+    baud_gen #(
+        .CLK_FREQ(50000000),
+        .BAUD_RATE(9600)
+    ) baud_gen_inst (
+        .clk(clk),
+        .reset(reset),
+        .baud_en(baud_en)
+    );
+
+    uart_tx tx_inst (
+        .clk(clk),
+        .reset(reset),
+        .baud_en(baud_en),
+        .t_byte(data_in),
+        .load(load_tx),
+        .tx(tx),
+        .ready(ready)
+    );
+
+    assign internal_rx = tx;  // Loopback
+
+    uart_rx rx_inst (
+        .clk(clk),
+        .reset(reset),
+        .baud_en(baud_en),
+        .serial_in(internal_rx),
+        .r_byte(data_out),
+        .done(done)
+    );
+
+endmodule
+ 
+
+
+
+
+
+
+
+`timescale 1ns/1ps
+
+module uart_tb;
+
+    reg clk;
+    reg reset;
+    reg [7:0] data_in;
+    reg load_tx;
+    wire tx;
+    wire [7:0] data_out;
+    wire done;
+    wire ready;
+
+    uart_top uut (
+        .clk(clk),
+        .reset(reset),
+        .data_in(data_in),
+        .load_tx(load_tx),
+        .tx(tx),
+        .data_out(data_out),
+        .done(done),
+        .ready(ready)
+    );
+
+    always #10 clk = ~clk; // 50 MHz clock (20ns period)
+
+    initial begin
+        clk = 0;
+        reset = 1;
+        data_in = 8'b0;
+        load_tx = 0;
+        #100;
+
+        reset = 0;
+        #100;
+
+        @(posedge clk);
+        data_in = 8'b01010101; // First test
+        load_tx = 1;
+        @(posedge clk);
+        load_tx = 0;
+
+        wait(done);
+        if (data_out == 8'b01010101)
+            $display("Test 1 Passed: Received %b", data_out);
+        else
+            $display("Test 1 Failed: Received %b", data_out);
+
+        #10000; // Gap
+
+        @(posedge clk);
+        data_in = 8'b10101010; // Second test
+        load_tx = 1;
+        @(posedge clk);
+        load_tx = 0;
+
+        wait(done);
+        if (data_out == 8'b10101010)
+            $display("Test 2 Passed: Received %b", data_out);
+        else
+            $display("Test 2 Failed: Received %b", data_out);
+
+        #10000;
+
+        $stop;
+    end
+
+endmodule
