@@ -1,3 +1,4 @@
+// Code your design here
 module traffic_light_controller (
     input wire clk, reset,
     input wire sound_sensor,
@@ -21,10 +22,10 @@ localparam S0  = 5'd0,  S1  = 5'd1,  S2  = 5'd2,  S3  = 5'd3,  S4  = 5'd4,
            S15 = 5'd15, S16 = 5'd16, S17 = 5'd17, S18 = 5'd18, S19 = 5'd19,
            S20 = 5'd20, S21 = 5'd21, S22 = 5'd22, S23 = 5'd23, S24 = 5'd24,
            S25 = 5'd25, S26 = 5'd26, S27 = 5'd27, S28 = 5'd28, S29 = 5'd29,
-           S30 = 5'd30, S31 = 5'd31, S32 = 5'd32, S33 = 5'd33, S34 = 5'd34;
+           S30 = 6'd30, S31 = 6'd31, S32 = 6'd32, S33 = 6'd33, S34 = 6'd34;
 
 // State variables
-reg [4:0] current_state, next_state;
+  reg [5:0] current_state, next_state;
 
 // Counter for timing
 reg [31:0] counter;
