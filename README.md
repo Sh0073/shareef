@@ -5,7 +5,7 @@ I'm particularly interested in developing power-efficient semiconductor systems,
 
 📫 Reach me at:
 ✉️ shareefvalic@gmail.com
-🔗 LinkedIn
+🔗 LinkedIn- www.linkedin.com/in/shareefvali
 📍 Bengaluru, India
 
 📂 Project Overview
