@@ -1,0 +1,20 @@
+RESULT_TRAFFIC_LIGHT_CONTROLLER :
+[2025-05-17 14:30:43 UTC] xrun -Q -unbuffered '-timescale' '1ns/1ns' '-sysv' '-access' '+rw' design.sv testbench.sv  
+TOOL:	xrun	23.09-s001: Started on May 17, 2025 at 10:30:43 EDT
+xrun: 23.09-s001: (c) Copyright 1995-2023 Cadence Design Systems, Inc.
+	Top level design units:
+		traffic_light_controller_tb
+Loading snapshot worklib.traffic_light_controller_tb:sv .................... Done
+xcelium> source /xcelium23.09/tools/xcelium/files/xmsimrc
+xcelium> run
+light traffic(a1):100
+light traffic(a1):100
+medium traffic(a2):110
+medium traffic(a2):110
+high traffic(a1):111
+high traffic(a1):111
+Simulation complete via $finish(1) at time 1840 NS + 0
+./testbench.sv:79     $finish;
+xcelium> exit
+TOOL:	xrun	23.09-s001: Exiting on May 17, 2025 at 10:30:44 EDT  (total: 00:00:01)
+Done
