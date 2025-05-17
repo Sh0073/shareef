@@ -1,0 +1,14 @@
+RESULT UART:
+[2025-05-17 14:25:31 UTC] xrun -Q -unbuffered '-timescale' '1ns/1ns' '-sysv' '-access' '+rw' design.sv testbench.sv  
+TOOL:	xrun	23.09-s001: Started on May 17, 2025 at 10:25:32 EDT
+xrun: 23.09-s001: (c) Copyright 1995-2023 Cadence Design Systems, Inc.
+	Top level design units:
+		uart_tb
+Loading snapshot worklib.uart_tb:sv .................... Done
+xcelium> source /xcelium23.09/tools/xcelium/files/xmsimrc
+xcelium> run
+Test 1 Passed: Received 01010101
+Test 2 Passed: Received 10101010
+Simulation stopped via $stop(1) at time 1260030 NS + 0
+./testbench.sv:67         $stop;
+xcelium> TOOL:	xrun	23.09-s001: Exiting on May 17, 2025 at 10:25:33 EDT  (total: 00:00:01)
