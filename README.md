@@ -1,59 +1,70 @@
 👨‍💻 About Me
 Hi! I'm Chitrachedu Shareef Vali, a passionate and detail-oriented VLSI Design Engineer with hands-on experience in digital design, RTL coding, and simulation using Verilog/SystemVerilog. I hold an M.Tech in VLSI Design from Amrita Vishwa Vidyapeetham, Bengaluru, and a B.Tech in Electrical and Electronics Engineering from JNTU Anantapur.
 
-I'm particularly interested in developing power-efficient semiconductor systems, and I've worked extensively with tools like ModelSim, Vivado, and Cadence for design and verification. I’m always looking to contribute to innovative VLSI projects while sharpening my skills in STA, DFT, and physical design flows.
+I'm particularly interested in developing power-efficient semiconductor systems, and I’ve worked extensively with tools like ModelSim, Vivado, and Cadence Xcelium for both design and verification. I’m always looking to contribute to innovative VLSI projects while sharpening my skills in STA, DFT, and physical design flows.
 
 📫 Reach me at:
 ✉️ shareefvalic@gmail.com
-🔗 LinkedIn- www.linkedin.com/in/shareefvali
+🔗 LinkedIn -http://www.linkedin.com/in/shareefvali
 📍 Bengaluru, India
 
 📂 Project Overview
-This repository contains Verilog-based projects that showcase practical implementations of VLSI design concepts. Below are the included modules:
+This repository contains Verilog-based projects showcasing practical implementations of core VLSI design concepts:
 
 🔶 FIR Filter (Synchronous)
-Design Goal: To implement an efficient Finite Impulse Response (FIR) filter using a custom ripple-carry adder and Right-to-Left addition strategy.
+Goal: Implement an efficient Finite Impulse Response (FIR) filter using a ripple-carry adder with Right-to-Left (R2L) addition strategy.
 
 Features:
 
 12-bit input/output
 
-Parameterized filter coefficients
+Parametric coefficient-based multiplication
 
-Fully clocked and synthesis-friendly RTL design
+Fully synthesizable RTL design
 
-Tools Used: ModelSim, Vivado
+Tools Used: ModelSim, Vivado, Xcelium
 
 🔷 Asynchronous FIR Filter with PTC (Experimental)
-Design Goal: Create a low-power asynchronous FIR filter architecture using Propagated Timing Constraints (PTC).
+Goal: Design a power-efficient asynchronous FIR filter using Propagated Timing Constraints (PTC).
 
-Application: Useful for power-sensitive VLSI chips and STA compatibility.
+Application: Power-sensitive systems, STA compatibility.
 
-Note: This part is under development; please refer to the latest commit messages for updates.
+Note: Under development.
 
 🟢 UART Communication Module
-Design Goal: UART module for asynchronous serial communication in FPGA or ASIC-based systems.
+Goal: Design a UART module for asynchronous serial data communication.
 
 Features:
 
-Baud rate control
+Baud rate generator
 
-Transmit/Receive logic
+Transmit/Receive modules
 
-Custom testbench verification
+Verified using a custom testbench
 
+Output:
+
+yaml
+Copy
+Edit
+Test 1 Passed: Received 01010101
+Test 2 Passed: Received 10101010
 🚦 Intelligent Adaptive Traffic Light Controller
-Design Goal: Real-time traffic control using sensor-based adaptive FSM logic.
+Goal: Real-time traffic light control using adaptive FSM with emergency vehicle detection.
 
 Features:
 
-Supports emergency vehicle detection
+Multi-sensor input for traffic load
 
-Dynamic timing based on traffic load
+Emergency override via sound and sensor detection
 
-Realistic simulation using ModelSim
+FSM with 35 states
 
-Inputs: Multiple road sensors + emergency override
+Output:
 
-Outputs: Signal lights (Red/Yellow/Green) and camera trigger
-
+scss
+Copy
+Edit
+light traffic(a1):100
+medium traffic(a2):110
+high traffic(a1):111
