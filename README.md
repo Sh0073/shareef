@@ -44,9 +44,6 @@ Verified using a custom testbench
 
 Output:
 
-yaml
-Copy
-Edit
 Test 1 Passed: Received 01010101
 Test 2 Passed: Received 10101010
 🚦 Intelligent Adaptive Traffic Light Controller
@@ -62,9 +59,6 @@ FSM with 35 states
 
 Output:
 
-scss
-Copy
-Edit
 light traffic(a1):100
 medium traffic(a2):110
 high traffic(a1):111
